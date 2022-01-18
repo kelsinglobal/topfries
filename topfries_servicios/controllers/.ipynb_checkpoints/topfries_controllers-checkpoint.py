@@ -3,6 +3,7 @@ import json
 import requests
 from odoo import http
 from odoo.http import Response, request
+from xmlrpc import client
 
 class TopFries(http.Controller) :
     @http.route('/topfries/api', auth='public', website=True)
@@ -125,3 +126,81 @@ class TopFries(http.Controller) :
         return res.text
     
   
+     #*******************************************************************************************************
+     # -*- API Odoo*- 
+     #*******************************************************************************************************
+    
+    @http.route('/topfries/api/apitestconn', auth='public', type="json", methods=['POST'], website=True)
+    def apitestconn(self,**kw):
+        url =str(kw.get('url','N/A'))
+   
+        common = client.ServerProxy("{}/xmlrpc/2/common".format(url))
+
+        return common.version()
+
+    @http.route('/topfries/api/apiauth', auth='public', type="json", methods=['POST'], website=True)
+    def apiauth(self,**kw):
+        url =str(kw.get('url','N/A'))
+        db =str(kw.get('db','N/A'))
+        username =str(kw.get('username','N/A'))
+        password =str(kw.get('password','N/A'))
+        
+        common = client.ServerProxy("{}/xmlrpc/2/common".format(url))
+        uid = common.authenticate(db, username, password, {})
+
+        return uid
+
+    @http.route('/topfries/api/apiaccrightsv1', auth='public', type="json", methods=['POST'], website=True)
+    def apiaccrightsv1(self,**kw):
+        url =str(kw.get('url','N/A'))
+        db =str(kw.get('db','N/A'))
+        uid =int(kw.get('uid',0))
+        model =str(kw.get('model','N/A'))
+        access =str(kw.get('access','N/A'))
+        apikey =str(kw.get('apikey','N/A'))
+        
+        models = client.ServerProxy("{}/xmlrpc/2/object".format(url))
+
+        model_access = models.execute_kw(db, uid, apikey,
+                                model,'check_access_rights',
+                                [access], {'raise_exception' : False})
+
+        return model_access
+
+    
+    @http.route('/topfries/api/apiaccrightsv2', auth='public', type="json", methods=['POST'], website=True)
+    def apiaccrightsv2(self,**kw):
+        url =str(kw.get('url','N/A'))
+        db =str(kw.get('db','N/A'))
+        username =str(kw.get('username','N/A'))
+        password =str(kw.get('password','N/A'))
+        model =str(kw.get('model','N/A'))
+        access =str(kw.get('access','N/A'))
+        apikey =str(kw.get('apikey','N/A'))
+        
+        
+        headers = {'Content-Type': 'application/json'}
+        data ={
+            "jsonrpc": "2.0", 
+            "params": {
+                "url": url,
+                "db": db,
+                "username": username,
+                "password": password
+            }
+        }
+        
+        data_json = json.dumps(data)
+        
+        url_auth = url + '/topfries/api/apiauth'
+        r = requests.post(url=url_auth, data=data_json, headers=headers)
+        y =  json.loads(r.content )
+        uid = y["result"]
+        
+        models = client.ServerProxy("{}/xmlrpc/2/object".format(url))
+
+        model_access = models.execute_kw(db, uid, apikey,
+                                model,'check_access_rights',
+                                [access], {'raise_exception' : False})
+
+        return model_access
