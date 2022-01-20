@@ -204,3 +204,92 @@ class TopFries(http.Controller) :
                                 [access], {'raise_exception' : False})
 
         return model_access
+    
+    
+    
+    @http.route('/topfries/api/apigetfields', auth='public', type="json", methods=['POST'], website=True)
+    def apigetfields(self,**kw):
+        url =str(kw.get('url','N/A'))
+        db =str(kw.get('db','N/A'))
+        uid =int(kw.get('uid',0))
+        model =str(kw.get('model','N/A'))
+        apikey =str(kw.get('apikey','N/A'))
+        
+        models = client.ServerProxy("{}/xmlrpc/2/object".format(url))
+
+        fields = models.execute_kw(db, uid, apikey,
+                                   model,'fields_get',
+                                   [],{'attributes': ['string', 'type', 'required']})
+
+        return fields
+    
+    @http.route('/topfries/api/apisearch_read', auth='public', type="json", methods=['POST'], website=True)
+    def apisearch_read(self,**kw):
+        url =str(kw.get('url','N/A'))
+        db =str(kw.get('db','N/A'))
+        uid =int(kw.get('uid',0))
+        model =str(kw.get('model','N/A'))
+        apikey =str(kw.get('apikey','N/A'))
+        
+        models = client.ServerProxy("{}/xmlrpc/2/object".format(url))
+
+        info = models.execute_kw(db, uid, apikey,
+                            model,'search_read',[])
+
+
+        return info
+    
+
+    #https://www.odoo.com/es_ES/forum/ayuda-1/send-parameters-to-a-controller-from-a-form-action-147463
+    @http.route('/topfries/api/apisearch_saleorder/<string:name>', auth='public', type="json", methods=['POST'], website=True)
+    def apisearch_saleorder(self,name,**kw):
+        url =str(kw.get('url','N/A'))
+        db =str(kw.get('db','N/A'))
+        uid =int(kw.get('uid',0))
+        model =str(kw.get('model','N/A'))
+        apikey =str(kw.get('apikey','N/A'))
+        
+        response = request.jsonrequest
+            
+        models = client.ServerProxy("{}/xmlrpc/2/object".format(url))
+
+        info = models.execute_kw(db, uid, apikey,
+                            model,'search_read',
+                            [[['name', '=', name]]])
+
+
+        return info
+
+
+    @http.route('/topfries/api/apisearch_saleorderv2/<string:name>', auth='public', type="json", methods=['POST'], website=True)
+    def apisearch_saleorderv2(self,name,**kw):
+        url =str(kw.get('url','N/A'))
+        db =str(kw.get('db','N/A'))
+        uid =int(kw.get('uid',0))
+        model =str(kw.get('model','N/A'))
+        apikey =str(kw.get('apikey','N/A'))
+        
+       
+        #Retorna todo el Body
+        response = request.jsonrequest
+        
+        #Extrae solo el contenido de params
+        response2 =  http.request.params
+        
+        #https://www.odoo.com/es_ES/forum/ayuda-1/how-to-get-json-data-in-an-odoo-controller-using-type-json-166743
+        
+        #Retorna todo el Body
+        reqdata= request.httprequest.data
+        
+        #Retorna JSON de los argumentos (Query String)
+        reqargs= request.httprequest.args
+        
+        models = client.ServerProxy("{}/xmlrpc/2/object".format(url))
+
+        #info = models.execute_kw(db, uid, apikey,
+        #                    model,'search_read',
+        #                    [[['name', '=', name]]])
+
+
+        return response2
+    
